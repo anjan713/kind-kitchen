@@ -1,0 +1,1606 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#fff9f0" />
+  <meta name="description" content="KindKitchen is an offline recipe-adaptation demo for fat-free and low-sodium preferences." />
+  <title>KindKitchen — Creamy Tomato Soup</title>
+  <style>
+    :root {
+      --canvas: #fff9f0;
+      --surface: #ffffff;
+      --surface-soft: #eef6f1;
+      --ink: #17352d;
+      --muted: #5a6d66;
+      --line: #d9e2dc;
+      --accent: #1f654a;
+      --accent-deep: #154a36;
+      --accent-soft: #fbe7e2;
+      --good: #134635;
+      --good-soft: #dceee5;
+      --warning: #6b4e00;
+      --warning-soft: #fff0cb;
+      --focus: #0b6e4f;
+      --shadow: 0 2px 10px rgba(23, 53, 45, 0.10);
+      --radius: 20px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { background: var(--canvas); }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      overflow-x: hidden;
+      background: var(--canvas);
+      color: var(--ink);
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.55;
+    }
+
+    button,
+    input { font: inherit; }
+
+    button {
+      min-height: 48px;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 750;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    :focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 3px;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .app-shell {
+      width: min(100%, 30rem);
+      margin: 0 auto;
+      padding: 16px 16px 44px;
+      overflow: clip;
+    }
+
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 2px 0 14px;
+    }
+
+    .wordmark {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--ink);
+      font-size: 1.25rem;
+      font-weight: 900;
+      letter-spacing: -0.035em;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .wordmark-mark {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 11px;
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 4px 0 rgba(21, 74, 54, 0.20);
+    }
+
+    .wordmark-mark svg { width: 20px; height: 20px; }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .icon-button,
+    .ghost-button,
+    .secondary-button,
+    .swap-button,
+    .undo-button,
+    .narration-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .icon-button {
+      position: relative;
+      width: 48px;
+      padding: 0;
+      background: var(--surface);
+      border-color: var(--line);
+      color: var(--ink);
+    }
+
+    .icon-button svg { width: 22px; height: 22px; }
+
+    .icon-button::after {
+      position: absolute;
+      z-index: 10;
+      top: calc(100% + 8px);
+      right: 0;
+      width: max-content;
+      max-width: min(240px, calc(100vw - 28px));
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: var(--ink);
+      color: #fff;
+      content: attr(data-tooltip);
+      font-size: 0.8rem;
+      font-weight: 650;
+      line-height: 1.25;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-3px);
+      transition: opacity 140ms ease, transform 140ms ease;
+      white-space: normal;
+    }
+
+    .icon-button:hover::after,
+    .icon-button:focus-visible::after {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .ghost-button,
+    .secondary-button {
+      padding: 0 14px;
+      background: var(--surface);
+      border-color: var(--line);
+      color: var(--ink);
+    }
+
+    .primary-button {
+      min-height: 48px;
+      padding: 0 16px;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 3px 0 rgba(21, 74, 54, 0.22);
+    }
+
+    .primary-button:hover { background: var(--accent-deep); }
+
+    .hero {
+      padding: 20px 2px 16px;
+    }
+
+    .eyebrow {
+      margin: 0 0 6px;
+      color: var(--accent-deep);
+      font-size: 0.86rem;
+      font-weight: 850;
+      letter-spacing: 0.045em;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2,
+    h3,
+    p { overflow-wrap: anywhere; }
+
+    h1 {
+      margin: 0;
+      max-width: 17ch;
+      font-size: clamp(1.9rem, 8vw, 2.5rem);
+      line-height: 1.06;
+      letter-spacing: -0.03em;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 1.17rem;
+      letter-spacing: -0.02em;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .hero-meta,
+    .badges,
+    .section-heading,
+    .inline-actions,
+    .narration-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hero-meta {
+      margin-top: 14px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .badge,
+    .finding-tag,
+    .updated-pill,
+    .count-chip,
+    .offline-note {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    .badge {
+      padding: 7px 10px;
+      border: 1px solid #cfe6d9;
+      background: var(--good-soft);
+      color: #134635;
+    }
+
+    .card {
+      min-width: 0;
+      margin-top: 14px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .section-heading {
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .section-heading p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .scan-card {
+      border-color: var(--line);
+      background: linear-gradient(145deg, #f2faf5 0%, #fff 75%);
+    }
+
+    .scan-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 14px 0;
+    }
+
+    .count-chip {
+      align-items: center;
+      flex-direction: row;
+      gap: 8px;
+      padding: 7px 14px;
+      border: 1px solid var(--line);
+      background: var(--canvas);
+      font-size: 0.9rem;
+      font-weight: 750;
+    }
+
+    .count-dot {
+      flex: 0 0 auto;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .count-chip.required .count-dot { background: #c64832; }
+    .count-chip.check .count-dot { background: #f0b449; }
+    .count-chip.optional .count-dot { background: #1f654a; }
+
+    .summary-copy,
+    .small-note,
+    .live-message {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .ingredient-list,
+    .steps-list {
+      display: grid;
+      gap: 10px;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+
+    .ingredient-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+    }
+
+    .ingredient-row.is-swapped {
+      border-color: #9ac5ae;
+      background: #fbfffc;
+    }
+
+    .ingredient-main { min-width: 0; }
+
+    .ingredient-name-button {
+      display: inline;
+      min-height: 0;
+      padding: 0;
+      border: 0;
+      border-radius: 4px;
+      background: transparent;
+      color: inherit;
+      text-align: left;
+      font-weight: 850;
+      text-decoration: underline;
+      text-decoration-color: rgba(31, 101, 74, 0.5);
+      text-decoration-thickness: 2px;
+      text-underline-offset: 3px;
+    }
+
+    .ingredient-name-static {
+      display: inline;
+      font-weight: 850;
+    }
+
+    .ingredient-amount {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .ingredient-replacement {
+      margin: 7px 0 0;
+      color: var(--good);
+      font-size: 0.9rem;
+      font-weight: 800;
+    }
+
+    .ingredient-replacement del {
+      color: var(--muted);
+      font-weight: 650;
+    }
+
+    .finding-tag {
+      width: fit-content;
+      margin-top: 8px;
+      padding: 5px 8px;
+      border: 1px solid currentColor;
+    }
+
+    .finding-tag.required { color: #842417; background: var(--accent-soft); }
+    .finding-tag.check { color: var(--warning); background: var(--warning-soft); }
+    .finding-tag.optional { color: var(--good); background: var(--good-soft); }
+
+    .swap-button,
+    .undo-button {
+      min-width: 74px;
+      padding: 0 12px;
+      white-space: nowrap;
+    }
+
+    .swap-button { background: var(--accent); color: #fff; }
+    .undo-button { background: #fff; border-color: #8ebaa1; color: var(--good); }
+
+    .row-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: stretch;
+    }
+
+    .ask-form {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 9px;
+      margin-top: 12px;
+    }
+
+    .ask-form input {
+      min-width: 0;
+      min-height: 48px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    .ask-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .voice-input-button {
+      width: 48px;
+      min-width: 48px;
+      padding: 0;
+      border-color: #aeb8b2;
+      background: #f4faf6;
+      color: var(--good);
+    }
+
+    .live-message {
+      min-height: 1.5em;
+      margin-top: 10px;
+    }
+
+    .swap-result {
+      margin-top: 14px;
+      padding: 14px;
+      border: 1px solid #9fc7ad;
+      border-radius: 14px;
+      background: var(--good-soft);
+    }
+
+    .swap-result h3 { color: #174431; }
+    .swap-result p { margin: 6px 0 0; font-size: 0.92rem; }
+    .swap-result strong { color: #174431; }
+
+    .step-item {
+      position: relative;
+      padding: 14px 14px 14px 50px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+    }
+
+    .step-number {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      display: grid;
+      place-items: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--ink);
+      color: #fff;
+      font-size: 0.8rem;
+      font-weight: 850;
+    }
+
+    .step-item.is-current { border-color: #2f8f68; box-shadow: 0 0 0 2px rgba(31, 101, 74, 0.18); }
+    .step-item.is-updated { border-color: #9dc7ad; }
+
+    .step-copy { margin: 0; }
+
+    .updated-pill {
+      margin: 0 0 8px;
+      padding: 5px 8px;
+      border: 1px solid #79ac8d;
+      background: var(--good-soft);
+      color: var(--good);
+    }
+
+    .narration-controls { margin-top: 14px; }
+
+    .narration-button {
+      padding: 0 12px;
+      background: #fff;
+      border-color: #9fb1aa;
+      color: #1a4935;
+    }
+
+    .narration-button.primary-narration {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .narration-status {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .offline-note {
+      padding: 7px 10px;
+      border: 1px solid #c4d5cb;
+      background: #f4faf6;
+      color: #21523c;
+    }
+
+    .backend-status-button {
+      font-size: 0.72rem;
+      letter-spacing: -0.04em;
+      font-weight: 900;
+    }
+
+    .backend-status-button[data-status="ready"] {
+      border-color: #86b49a;
+      background: #f3fbf6;
+      color: #174431;
+    }
+
+    .backend-status-button[data-status="fallback"] {
+      border-color: #d6b66f;
+      background: #fff9e8;
+      color: #624308;
+    }
+
+    .backend-status-button[data-status="offline"] {
+      border-color: #b9c2bc;
+      background: #f7f8f6;
+      color: #465049;
+    }
+
+    .backend-status-button[data-status="checking"] {
+      border-color: #9db0a9;
+      background: #f2f7f4;
+      color: #2c4a3f;
+    }
+
+    .ai-suggestion-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin: 0 0 12px;
+      padding: 10px 12px;
+      border: 1px solid #88b89c;
+      border-radius: 12px;
+      background: #f2faf5;
+      color: #174431;
+      font-size: 0.9rem;
+      font-weight: 760;
+    }
+
+    .ai-suggestion-banner[hidden] { display: none; }
+
+    @media (max-width: 390px) {
+      .app-shell { padding-inline: 10px; }
+      .app-header { flex-wrap: wrap; }
+      .header-actions { width: 100%; }
+      .card { padding: 15px; }
+      .ghost-button { padding-inline: 11px; }
+      .ingredient-row { grid-template-columns: minmax(0, 1fr); }
+      .ingredient-row > .swap-button,
+      .ingredient-row > .undo-button,
+      .ingredient-row > .row-actions { width: 100%; }
+      .ask-form { grid-template-columns: 1fr; }
+      .ask-actions { display: grid; grid-template-columns: 48px minmax(0, 1fr); }
+      .primary-button { width: 100%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell" id="top">
+    <header class="app-header">
+      <a class="wordmark" href="#top" aria-label="KindKitchen home">
+        <span class="wordmark-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M20 4c-9 0-15 4.5-15 12 0 1.2.2 2.3.6 3.3C7 16 10 13 14 11c-3.5 3-6 6.5-7.2 10.6.9.3 1.9.4 3 .4 7.5 0 11.2-6 11.2-15V4z"/>
+          </svg>
+        </span>
+        <span>KindKitchen</span>
+      </a>
+      <div class="header-actions">
+        <button
+          class="icon-button"
+          id="phonePreviewButton"
+          type="button"
+          data-tooltip="Open 375px phone preview"
+          aria-label="Open 375px phone preview"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="6" y="2.5" width="12" height="19" rx="2.5"></rect>
+            <path d="M10 5.5h4"></path>
+            <path d="M11 18.5h2"></path>
+          </svg>
+        </button>
+        <button
+          class="icon-button backend-status-button"
+          id="backendStatusButton"
+          type="button"
+          data-status="offline"
+          data-tooltip="AI suggestions: offline swaps active"
+          aria-label="AI suggestions: offline swaps active. Activate to check again."
+        >
+          <span id="backendStatusGlyph" aria-hidden="true">AI⌁</span>
+          <span class="sr-only" id="backendStatusText">AI suggestions: offline swaps active.</span>
+        </button>
+        <button class="ghost-button" id="helpButton" type="button">Help</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="recipeTitle">
+        <p class="eyebrow">Your kitchen helper</p>
+        <h1 id="recipeTitle">Creamy Tomato Soup</h1>
+        <div class="hero-meta">
+          <span>Serves 4</span>
+          <span aria-hidden="true">•</span>
+          <span>Adapt one ingredient at a time</span>
+        </div>
+        <div class="badges" aria-label="Saved dietary preferences">
+          <span class="badge">❤ Fat-free</span>
+          <span class="badge">❤ Low-sodium</span>
+        </div>
+      </section>
+
+      <section class="card scan-card" aria-labelledby="scanTitle">
+        <div class="section-heading">
+          <div>
+            <h2 id="scanTitle">Ingredient scan</h2>
+            <p>An ingredient guide, not an exact nutrition calculation.</p>
+          </div>
+          <span class="offline-note">⌁ Works offline</span>
+        </div>
+        <div class="scan-grid" id="scanCounts" aria-label="Dietary scan counts"></div>
+        <p class="summary-copy" id="scanSummary"></p>
+      </section>
+
+      <section class="card" aria-labelledby="ingredientsTitle">
+        <div class="section-heading">
+          <div>
+            <h2 id="ingredientsTitle">Ingredients</h2>
+            <p>Tap a flagged ingredient or use its Swap button.</p>
+          </div>
+        </div>
+        <p class="ai-suggestion-banner" id="aiSuggestionBanner" role="status" aria-live="polite" hidden>
+          <span aria-hidden="true">✦</span>
+          <span id="aiSuggestionText">AI suggested a swap for this version.</span>
+        </p>
+        <ul class="ingredient-list" id="ingredientList"></ul>
+      </section>
+
+      <section class="card" aria-labelledby="askTitle">
+        <div class="section-heading">
+          <div>
+            <h2 id="askTitle">Ask for a swap</h2>
+            <p>Try “cream,” “broth,” “tomatoes,” “salt,” or “oil.”</p>
+          </div>
+        </div>
+        <form class="ask-form" id="askSwapForm" novalidate>
+          <label class="sr-only" for="swapInput">Ingredient to replace</label>
+          <input id="swapInput" name="ingredient" autocomplete="off" inputmode="text" placeholder="Name an ingredient to replace" />
+          <div class="ask-actions">
+            <button class="voice-input-button" id="voiceInputButton" type="button" hidden aria-label="Speak an ingredient to replace" title="Speak an ingredient to replace">🎙</button>
+            <button class="primary-button" type="submit">Find swap</button>
+          </div>
+        </form>
+        <p class="live-message" id="swapLive" role="status" aria-live="polite" aria-atomic="true"></p>
+        <div id="swapResult" aria-live="polite" aria-atomic="true"></div>
+      </section>
+
+      <section class="card" aria-labelledby="stepsTitle">
+        <div class="section-heading">
+          <div>
+            <h2 id="stepsTitle">Cooking steps</h2>
+            <p>Steps change immediately when an ingredient is swapped.</p>
+          </div>
+        </div>
+        <ol class="steps-list" id="stepsList"></ol>
+        <div class="narration-controls" aria-label="Voice narration controls">
+          <button class="narration-button primary-narration" id="playNarrationButton" type="button">Play narration</button>
+          <button class="narration-button" id="pauseNarrationButton" type="button">Pause</button>
+          <button class="narration-button" id="stopNarrationButton" type="button">Stop</button>
+        </div>
+        <p class="narration-status" id="narrationStatus" aria-live="polite"></p>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    "use strict";
+
+    /*
+      Optional backend integration is intentionally OFF by default.
+      To try the local OpenAI chooser, change enableOptionalBackend to true,
+      serve this file with llm-server.mjs, and open http://localhost:8787.
+      Never place an OpenAI API key in this HTML file.
+    */
+    window.KINDKITCHEN_CONFIG = window.KINDKITCHEN_CONFIG || {
+      enableOptionalBackend: false,
+      substitutionEndpoint: "/api/substitutions",
+      speechEndpoint: "/api/speech",
+      requestTimeoutMs: 1600,
+      speechTimeoutMs: 6000,
+      healthTimeoutMs: 700
+    };
+
+    const CONFIG = Object.freeze({
+      enableOptionalBackend: window.KINDKITCHEN_CONFIG.enableOptionalBackend === true,
+      substitutionEndpoint: typeof window.KINDKITCHEN_CONFIG.substitutionEndpoint === "string"
+        ? window.KINDKITCHEN_CONFIG.substitutionEndpoint
+        : "/api/substitutions",
+      speechEndpoint: typeof window.KINDKITCHEN_CONFIG.speechEndpoint === "string"
+        ? window.KINDKITCHEN_CONFIG.speechEndpoint
+        : "/api/speech",
+      requestTimeoutMs: Number.isFinite(window.KINDKITCHEN_CONFIG.requestTimeoutMs)
+        ? window.KINDKITCHEN_CONFIG.requestTimeoutMs
+        : 1600,
+      speechTimeoutMs: Number.isFinite(window.KINDKITCHEN_CONFIG.speechTimeoutMs)
+        ? window.KINDKITCHEN_CONFIG.speechTimeoutMs
+        : 6000,
+      healthTimeoutMs: Number.isFinite(window.KINDKITCHEN_CONFIG.healthTimeoutMs)
+        ? window.KINDKITCHEN_CONFIG.healthTimeoutMs
+        : 700
+    });
+
+    const STATUS_META = Object.freeze({
+      required: Object.freeze({ icon: "↻", label: "Needs a change" }),
+      check: Object.freeze({ icon: "⌕", label: "Check the label" }),
+      optional: Object.freeze({ icon: "◇", label: "Optional tweak" })
+    });
+
+    const INGREDIENTS = Object.freeze([
+      Object.freeze({ id: "canned-crushed-tomatoes", amount: "28 oz", name: "canned crushed tomatoes", stepText: "28 oz canned crushed tomatoes", finding: "check", aliases: ["canned crushed tomatoes", "crushed tomatoes", "tomatoes", "tomato"] }),
+      Object.freeze({ id: "heavy-cream", amount: "1/2 cup", name: "heavy cream", stepText: "1/2 cup heavy cream", finding: "required", aliases: ["heavy cream", "cream"] }),
+      Object.freeze({ id: "onion", amount: "1 medium, diced", name: "onion", stepText: "1 medium diced onion", finding: null, aliases: ["onion"] }),
+      Object.freeze({ id: "garlic", amount: "3 cloves, minced", name: "garlic", stepText: "3 minced garlic cloves", finding: null, aliases: ["garlic"] }),
+      Object.freeze({ id: "vegetable-broth", amount: "2 cups", name: "vegetable broth", stepText: "2 cups vegetable broth", finding: "check", aliases: ["vegetable broth", "broth", "stock"] }),
+      Object.freeze({ id: "olive-oil", amount: "1 tbsp", name: "olive oil", stepText: "1 tablespoon olive oil", finding: "optional", aliases: ["olive oil", "oil"] }),
+      Object.freeze({ id: "salt", amount: "1/2 tsp", name: "salt", stepText: "1/2 teaspoon salt", finding: "required", aliases: ["salt"] }),
+      Object.freeze({ id: "black-pepper", amount: "1/4 tsp", name: "black pepper", stepText: "1/4 teaspoon black pepper", finding: null, aliases: ["black pepper", "pepper"] })
+    ]);
+
+    const INGREDIENT_BY_ID = Object.freeze(Object.fromEntries(INGREDIENTS.map((ingredient) => [ingredient.id, ingredient])));
+
+    /*
+      The model never writes recipe copy. It may only select an allow-listed ID,
+      which the UI maps to one authored substitution object below.
+    */
+    const SUBSTITUTIONS = Object.freeze({
+      "canned-crushed-tomatoes": Object.freeze({
+        fallbackId: "no-salt-added-crushed-tomatoes",
+        choices: Object.freeze({
+          "no-salt-added-crushed-tomatoes": Object.freeze({
+            id: "no-salt-added-crushed-tomatoes",
+            useInstead: "no-salt-added canned crushed tomatoes",
+            amount: "28 oz (same amount)",
+            why: "This follows the demo's low-sodium label-check policy for packaged tomatoes.",
+            cookingNote: "Use the same way as the original tomatoes; check the can label before cooking.",
+            rowText: "28 oz no-salt-added canned crushed tomatoes",
+            stepText: "28 oz no-salt-added canned crushed tomatoes"
+          }),
+          "no-salt-added-diced-tomatoes": Object.freeze({
+            id: "no-salt-added-diced-tomatoes",
+            useInstead: "no-salt-added diced tomatoes, blended smooth",
+            amount: "28 oz (same amount)",
+            why: "This keeps the tomato base while using a packaged option selected for the demo's low-sodium policy.",
+            cookingNote: "Blend the tomatoes before or after simmering until the soup is smooth; check the can label.",
+            rowText: "28 oz no-salt-added diced tomatoes, blended smooth",
+            stepText: "28 oz no-salt-added diced tomatoes, blended smooth"
+          }),
+          "fresh-tomato-puree": Object.freeze({
+            id: "fresh-tomato-puree",
+            useInstead: "fresh tomato purée with no salt added",
+            amount: "about 28 oz prepared tomato purée",
+            why: "This uses a tomato base without adding salt during preparation.",
+            cookingNote: "Simmer a little longer if the fresh purée is thin, and add no salt while it cooks.",
+            rowText: "about 28 oz fresh tomato purée with no salt added",
+            stepText: "about 28 oz fresh tomato purée with no salt added"
+          })
+        })
+      }),
+      "heavy-cream": Object.freeze({
+        fallbackId: "fat-free-evaporated-milk",
+        choices: Object.freeze({
+          "fat-free-evaporated-milk": Object.freeze({
+            id: "fat-free-evaporated-milk",
+            useInstead: "fat-free evaporated milk",
+            amount: "1/2 cup (same amount)",
+            why: "It gives the soup a creamy texture while following the demo's fat-free preference.",
+            cookingNote: "Stir it in after blending over low heat. Keep the soup below a boil.",
+            rowText: "1/2 cup fat-free evaporated milk",
+            stepText: "1/2 cup fat-free evaporated milk"
+          }),
+          "skim-milk-cornstarch": Object.freeze({
+            id: "skim-milk-cornstarch",
+            useInstead: "skim milk with a cornstarch slurry",
+            amount: "1/2 cup skim milk + 1 tsp cornstarch mixed with 1 tbsp cold water",
+            why: "This is a fat-free way to add a lighter creamy texture.",
+            cookingNote: "Whisk the slurry smooth, stir it in slowly after blending, then warm gently until slightly thickened.",
+            rowText: "1/2 cup skim milk + 1 tsp cornstarch slurry",
+            stepText: "1/2 cup skim milk with a cornstarch slurry"
+          }),
+          "plain-nonfat-greek-yogurt": Object.freeze({
+            id: "plain-nonfat-greek-yogurt",
+            useInstead: "plain nonfat Greek yogurt, tempered first",
+            amount: "1/2 cup",
+            why: "It offers a creamy finish while following the demo's fat-free preference.",
+            cookingNote: "Whisk a spoonful of warm soup into the yogurt first, remove the pot from heat, then stir it in. Do not boil.",
+            rowText: "1/2 cup plain nonfat Greek yogurt, tempered first",
+            stepText: "1/2 cup plain nonfat Greek yogurt, tempered first"
+          })
+        })
+      }),
+      "vegetable-broth": Object.freeze({
+        fallbackId: "no-salt-added-vegetable-broth",
+        choices: Object.freeze({
+          "no-salt-added-vegetable-broth": Object.freeze({
+            id: "no-salt-added-vegetable-broth",
+            useInstead: "no-salt-added vegetable broth",
+            amount: "2 cups (same amount)",
+            why: "This follows the demo's low-sodium label-check policy for broth.",
+            cookingNote: "Use the same way as the original broth and taste before adding any seasoning.",
+            rowText: "2 cups no-salt-added vegetable broth",
+            stepText: "2 cups no-salt-added vegetable broth"
+          }),
+          "water-bay-leaf": Object.freeze({
+            id: "water-bay-leaf",
+            useInstead: "water with a bay leaf",
+            amount: "2 cups water + 1 bay leaf",
+            why: "This avoids relying on packaged broth for the demo's low-sodium preference.",
+            cookingNote: "Add the bay leaf with the tomatoes and remove it before blending.",
+            rowText: "2 cups water + 1 bay leaf",
+            stepText: "2 cups water and 1 bay leaf"
+          }),
+          "homemade-unsalted-vegetable-stock": Object.freeze({
+            id: "homemade-unsalted-vegetable-stock",
+            useInstead: "homemade vegetable stock with no salt added",
+            amount: "2 cups (same amount)",
+            why: "This keeps the vegetable flavor while avoiding salt added during preparation.",
+            cookingNote: "Use a batch made without added salt and taste the finished soup before seasoning.",
+            rowText: "2 cups homemade vegetable stock with no salt added",
+            stepText: "2 cups homemade vegetable stock with no salt added"
+          })
+        })
+      }),
+      "olive-oil": Object.freeze({
+        fallbackId: "no-salt-added-broth-saute",
+        choices: Object.freeze({
+          "water-saute": Object.freeze({
+            id: "water-saute",
+            useInstead: "water for a water sauté",
+            amount: "1 tbsp water, plus small splashes as needed",
+            why: "This removes added oil for the demo's fat-free preference.",
+            cookingNote: "Use a nonstick pot and add water a little at a time so the onion does not stick.",
+            rowText: "1 tbsp water, plus small splashes as needed",
+            stepText: "1 tablespoon water, adding small splashes as needed"
+          }),
+          "no-salt-added-broth-saute": Object.freeze({
+            id: "no-salt-added-broth-saute",
+            useInstead: "A splash of vegetable broth (water-sauté)",
+            amount: "2–3 tbsp as needed",
+            why: "Cuts added fat for a stricter low-fat version. This is an optional tweak — keep the oil if you prefer.",
+            cookingNote: "Add a little broth at a time to keep the onion and garlic from sticking.",
+            rowText: "2–3 tbsp vegetable broth as needed (water-sauté)",
+            stepText: "a splash of vegetable broth (2–3 tablespoons as needed)"
+          }),
+          "dry-saute": Object.freeze({
+            id: "dry-saute",
+            useInstead: "a dry nonstick sauté with water only if needed",
+            amount: "No oil; add 1 tbsp water only if the onion begins to stick",
+            why: "This keeps the step free of added oil for the demo's fat-free preference.",
+            cookingNote: "Start in a nonstick pot over medium-low heat and add water only in small splashes if needed.",
+            rowText: "no oil; water only if needed",
+            stepText: "a dry nonstick sauté, adding 1 tablespoon water only if needed"
+          })
+        })
+      }),
+      "salt": Object.freeze({
+        fallbackId: "omit-salt-lemon",
+        choices: Object.freeze({
+          "omit-salt-lemon": Object.freeze({
+            id: "omit-salt-lemon",
+            useInstead: "skip the salt and finish with lemon juice if desired",
+            amount: "Omit 1/2 tsp salt; offer lemon at the table",
+            why: "This avoids adding salt to the pot for the demo's low-sodium preference.",
+            cookingNote: "Add pepper as written, taste after blending, and use a small squeeze of lemon only if desired.",
+            rowText: "omit 1/2 tsp salt; lemon at the table if desired",
+            stepText: "no added salt; black pepper, with lemon at the table if desired"
+          }),
+          "salt-free-italian-seasoning": Object.freeze({
+            id: "salt-free-italian-seasoning",
+            useInstead: "salt-free Italian herb seasoning",
+            amount: "1/2 tsp",
+            why: "This adds herb flavor without adding salt to the pot.",
+            cookingNote: "Check the seasoning label says salt-free, then add it with the black pepper.",
+            rowText: "1/2 tsp salt-free Italian herb seasoning",
+            stepText: "1/2 teaspoon salt-free Italian herb seasoning"
+          }),
+          "garlic-onion-herbs": Object.freeze({
+            id: "garlic-onion-herbs",
+            useInstead: "garlic powder, onion powder, and dried basil — not garlic or onion salt",
+            amount: "1/4 tsp each garlic powder, onion powder, and dried basil",
+            why: "This builds flavor with seasonings that do not add salt when the labels are salt-free.",
+            cookingNote: "Add with the black pepper and confirm the jars are not garlic salt or onion salt.",
+            rowText: "1/4 tsp each garlic powder, onion powder, and dried basil",
+            stepText: "1/4 teaspoon each garlic powder, onion powder, and dried basil"
+          })
+        })
+      })
+    });
+
+    const STEP_TEMPLATES = Object.freeze([
+      Object.freeze({ id: "step-1", parts: Object.freeze(["Heat ", { ingredientId: "olive-oil" }, " in a large pot over medium heat."]) }),
+      Object.freeze({ id: "step-2", parts: Object.freeze(["Add onion and garlic; sauté until softened, about 5 minutes."]) }),
+      Object.freeze({ id: "step-3", parts: Object.freeze(["Add ", { ingredientId: "canned-crushed-tomatoes" }, " and ", { ingredientId: "vegetable-broth" }, "; bring to a simmer."]) }),
+      Object.freeze({ id: "step-4", parts: Object.freeze(["Stir in ", { ingredientId: "heavy-cream" }, "; simmer 10 minutes."]) }),
+      Object.freeze({ id: "step-5", parts: Object.freeze(["Season with ", { ingredientId: "salt" }, " and black pepper. Blend until smooth and serve."]) })
+    ]);
+
+    const DEFAULT_VOICE_STATE = Object.freeze({
+      supported: "speechSynthesis" in window && typeof window.SpeechSynthesisUtterance === "function",
+      status: "idle",
+      stepIndex: 0,
+      runToken: 0
+    });
+
+    const DEFAULT_BACKEND_STATE = Object.freeze({
+      status: "offline"
+    });
+
+    let state = Object.freeze({
+      swaps: Object.freeze({}),
+      optionHistory: Object.freeze({}),
+      pendingIngredientId: null,
+      lastSwapId: null,
+      requestId: 0,
+      backend: DEFAULT_BACKEND_STATE,
+      voice: DEFAULT_VOICE_STATE
+    });
+
+    const dom = Object.freeze({
+      scanCounts: document.getElementById("scanCounts"),
+      scanSummary: document.getElementById("scanSummary"),
+      ingredientList: document.getElementById("ingredientList"),
+      askForm: document.getElementById("askSwapForm"),
+      swapInput: document.getElementById("swapInput"),
+      voiceInputButton: document.getElementById("voiceInputButton"),
+      swapLive: document.getElementById("swapLive"),
+      swapResult: document.getElementById("swapResult"),
+      stepsList: document.getElementById("stepsList"),
+      playNarrationButton: document.getElementById("playNarrationButton"),
+      pauseNarrationButton: document.getElementById("pauseNarrationButton"),
+      stopNarrationButton: document.getElementById("stopNarrationButton"),
+      narrationStatus: document.getElementById("narrationStatus"),
+      phonePreviewButton: document.getElementById("phonePreviewButton"),
+      backendStatusButton: document.getElementById("backendStatusButton"),
+      backendStatusGlyph: document.getElementById("backendStatusGlyph"),
+      backendStatusText: document.getElementById("backendStatusText"),
+      aiSuggestionBanner: document.getElementById("aiSuggestionBanner"),
+      aiSuggestionText: document.getElementById("aiSuggestionText"),
+      helpButton: document.getElementById("helpButton")
+    });
+
+    const escapeHtml = (value) => String(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+
+    const setState = (patch) => {
+      state = Object.freeze({ ...state, ...patch });
+    };
+
+    const announce = (message) => {
+      dom.swapLive.textContent = message;
+    };
+
+    const getReplacement = (ingredientId) => state.swaps[ingredientId] || null;
+
+    const getChoice = (ingredientId, substitutionId) => {
+      const entry = SUBSTITUTIONS[ingredientId];
+      return entry && entry.choices[substitutionId] ? entry.choices[substitutionId] : null;
+    };
+
+    const withSource = (choice, source) => choice ? Object.freeze({ ...choice, source }) : null;
+
+    const getFallbackChoice = (ingredientId, excludeIds = []) => {
+      const entry = SUBSTITUTIONS[ingredientId];
+      if (!entry) return null;
+      const ids = Object.keys(entry.choices);
+      const remaining = ids.filter((id) => !excludeIds.includes(id));
+      const pickId = remaining.includes(entry.fallbackId)
+        ? entry.fallbackId
+        : (remaining[0] || entry.fallbackId);
+      return withSource(getChoice(ingredientId, pickId), "fallback");
+    };
+
+    const getDisplayStepText = (ingredientId) => {
+      const replacement = getReplacement(ingredientId);
+      return replacement ? replacement.stepText : INGREDIENT_BY_ID[ingredientId].stepText;
+    };
+
+    const getCookSteps = () => STEP_TEMPLATES.map((template) => {
+      const changed = template.parts.some((part) => typeof part === "object" && Boolean(getReplacement(part.ingredientId)));
+      const text = template.parts.map((part) => (
+        typeof part === "string" ? part : getDisplayStepText(part.ingredientId)
+      )).join("");
+      return Object.freeze({ id: template.id, text, changed });
+    });
+
+    const getScanCounts = () => INGREDIENTS.reduce((counts, ingredient) => {
+      if (!ingredient.finding) return counts;
+      if (ingredient.finding === "check") return { ...counts, check: counts.check + 1 };
+      if (getReplacement(ingredient.id)) return counts;
+      return { ...counts, [ingredient.finding]: counts[ingredient.finding] + 1 };
+    }, { required: 0, check: 0, optional: 0 });
+
+    const renderScan = () => {
+      const counts = getScanCounts();
+      const chips = [
+        { type: "required", count: counts.required, singular: "required change", plural: "required changes" },
+        { type: "check", count: counts.check, singular: "label check", plural: "label checks" },
+        { type: "optional", count: counts.optional, singular: "optional tweak", plural: "optional tweaks" }
+      ];
+      dom.scanCounts.innerHTML = chips.map((chip) => `
+        <span class="count-chip ${chip.type}">
+          <span class="count-dot" aria-hidden="true"></span>
+          <span>${chip.count} ${chip.count === 1 ? chip.singular : chip.plural}</span>
+        </span>
+      `).join("");
+
+      const requiredSummary = counts.required === 0
+        ? "Required changes are handled. Keep checking labels on packaged items before cooking."
+        : `${counts.required} required ${counts.required === 1 ? "change remains" : "changes remain"}. Tap a flagged ingredient or choose Swap to update this recipe one ingredient at a time.`;
+      dom.scanSummary.textContent = requiredSummary;
+    };
+
+    const findingMarkup = (finding) => {
+      if (!finding) return "";
+      const meta = STATUS_META[finding];
+      return `<span class="finding-tag ${finding}"><span aria-hidden="true">${meta.icon}</span>${meta.label}</span>`;
+    };
+
+    const renderIngredients = () => {
+      const isBusy = state.pendingIngredientId !== null;
+      dom.ingredientList.innerHTML = INGREDIENTS.map((ingredient) => {
+        const replacement = getReplacement(ingredient.id);
+        const isSwappable = Boolean(SUBSTITUTIONS[ingredient.id]);
+        const nameControl = isSwappable
+          ? `<button class="ingredient-name-button" type="button" data-action="swap" data-ingredient-id="${ingredient.id}" aria-label="Swap ${escapeHtml(ingredient.name)}">${escapeHtml(ingredient.name)}</button>`
+          : `<span class="ingredient-name-static">${escapeHtml(ingredient.name)}</span>`;
+        const pendingThis = state.pendingIngredientId === ingredient.id;
+        const totalOptions = isSwappable ? Object.keys(SUBSTITUTIONS[ingredient.id].choices).length : 0;
+        const action = replacement
+          ? `<div class="row-actions">
+              ${totalOptions > 1 ? `<button class="swap-button" type="button" data-action="another" data-ingredient-id="${ingredient.id}" ${isBusy ? "disabled" : ""}>${pendingThis ? "Finding…" : "Another option"}</button>` : ""}
+              <button class="undo-button" type="button" data-action="undo" data-ingredient-id="${ingredient.id}">Undo</button>
+            </div>`
+          : isSwappable
+            ? `<button class="swap-button" type="button" data-action="swap" data-ingredient-id="${ingredient.id}" ${isBusy ? "disabled" : ""}>${pendingThis ? "Finding…" : "Swap"}</button>`
+            : "";
+        const replacementMarkup = replacement
+          ? `<p class="ingredient-replacement"><del>${escapeHtml(`${ingredient.amount} ${ingredient.name}`)}</del><br><span>→ ${escapeHtml(replacement.rowText)}</span></p>`
+          : `<p class="ingredient-amount">${escapeHtml(ingredient.amount)}</p>`;
+        return `
+          <li class="ingredient-row ${replacement ? "is-swapped" : ""}">
+            <div class="ingredient-main">
+              ${nameControl}
+              ${replacementMarkup}
+              ${replacement ? "" : findingMarkup(ingredient.finding)}
+            </div>
+            ${action}
+          </li>
+        `;
+      }).join("");
+    };
+
+    const renderBackendStatus = () => {
+      const statusMap = Object.freeze({
+        ready: Object.freeze({ glyph: "AI✓", message: "AI suggestions ready" }),
+        fallback: Object.freeze({ glyph: "AI↔", message: "AI service connected; offline swaps active" }),
+        offline: Object.freeze({ glyph: "AI⌁", message: "AI suggestions offline; offline swaps active" }),
+        checking: Object.freeze({ glyph: "AI…", message: "Checking AI suggestions" })
+      });
+      const visual = statusMap[state.backend.status] || statusMap.offline;
+      dom.backendStatusButton.dataset.status = state.backend.status;
+      dom.backendStatusButton.dataset.tooltip = `${visual.message}. Activate to check again.`;
+      dom.backendStatusButton.setAttribute("aria-label", `${visual.message}. Activate to check again.`);
+      dom.backendStatusGlyph.textContent = visual.glyph;
+      dom.backendStatusText.textContent = visual.message;
+    };
+
+    const renderAiSuggestionBanner = () => {
+      const aiSuggestionCount = Object.values(state.swaps).filter((swap) => swap.source === "llm").length;
+      dom.aiSuggestionBanner.hidden = aiSuggestionCount === 0;
+      dom.aiSuggestionText.textContent = aiSuggestionCount === 1
+        ? "AI suggested one swap for this version. Review the ingredient and cooking note before continuing."
+        : `AI suggested ${aiSuggestionCount} swaps for this version. Review the ingredient notes before continuing.`;
+    };
+
+    const renderSwapResult = () => {
+      const replacement = state.lastSwapId ? getReplacement(state.lastSwapId) : null;
+      if (!replacement) {
+        dom.swapResult.innerHTML = "";
+        return;
+      }
+      const ingredient = INGREDIENT_BY_ID[state.lastSwapId];
+      const totalOptions = Object.keys(SUBSTITUTIONS[ingredient.id].choices).length;
+      const shownCount = (state.optionHistory[ingredient.id] || []).length;
+      const sourceLabel = replacement.source === "llm" ? " · chosen by AI" : "";
+      dom.swapResult.innerHTML = `
+        <article class="swap-result" aria-labelledby="swapResultTitle">
+          <h3 id="swapResultTitle">✓ ${escapeHtml(ingredient.name)} updated</h3>
+          <p class="small-note">Option ${shownCount} of ${totalOptions}${sourceLabel}</p>
+          <p><strong>Use instead:</strong> ${escapeHtml(replacement.useInstead)}</p>
+          <p><strong>Amount:</strong> ${escapeHtml(replacement.amount)}</p>
+          <p><strong>Why it fits:</strong> ${escapeHtml(replacement.why)}</p>
+          <p><strong>Cooking note:</strong> ${escapeHtml(replacement.cookingNote)}</p>
+          <div class="inline-actions" style="margin-top:12px">
+            ${totalOptions > 1 ? `<button class="swap-button" type="button" data-action="another" data-ingredient-id="${ingredient.id}">Show another option</button>` : ""}
+            <button class="undo-button" type="button" data-action="undo" data-ingredient-id="${ingredient.id}">Undo this swap</button>
+          </div>
+        </article>
+      `;
+    };
+
+    const renderSteps = () => {
+      const steps = getCookSteps();
+      const narrationIndex = state.voice.status === "idle" ? -1 : state.voice.stepIndex;
+      dom.stepsList.innerHTML = steps.map((step, index) => `
+        <li class="step-item ${step.changed ? "is-updated" : ""} ${narrationIndex === index ? "is-current" : ""}">
+          <span class="step-number" aria-hidden="true">${index + 1}</span>
+          ${step.changed ? '<span class="updated-pill">✓ Updated for your version</span>' : ""}
+          <p class="step-copy">${escapeHtml(step.text)}</p>
+        </li>
+      `).join("");
+    };
+
+    const renderNarration = () => {
+      const { supported, status, stepIndex } = state.voice;
+      const canNarrate = supported || ttsCapable;
+      const isPlaying = status === "playing";
+      const isPaused = status === "paused";
+      dom.playNarrationButton.disabled = !canNarrate || isPlaying;
+      dom.pauseNarrationButton.disabled = !canNarrate || !isPlaying;
+      dom.stopNarrationButton.disabled = !canNarrate || status === "idle";
+      dom.playNarrationButton.textContent = isPaused ? "Resume narration" : "Play narration";
+
+      if (!canNarrate) {
+        dom.narrationStatus.textContent = "Voice narration is not available in this browser. The written steps always work.";
+        return;
+      }
+      if (isPlaying) {
+        dom.narrationStatus.textContent = `Reading step ${stepIndex + 1} of ${STEP_TEMPLATES.length}.`;
+        return;
+      }
+      if (isPaused) {
+        dom.narrationStatus.textContent = `Paused at step ${stepIndex + 1} of ${STEP_TEMPLATES.length}. Resume will use the latest recipe text.`;
+        return;
+      }
+      dom.narrationStatus.textContent = ttsCapable
+        ? "Voice narration is ready with a natural voice. It reads the same updated steps shown above."
+        : "Voice narration is ready. It reads the same updated steps shown above.";
+    };
+
+    const render = () => {
+      renderBackendStatus();
+      renderScan();
+      renderAiSuggestionBanner();
+      renderIngredients();
+      renderSwapResult();
+      renderSteps();
+      renderNarration();
+    };
+
+    const normalizeText = (value) => value
+      .toLowerCase()
+      .replace(/[^a-z\s-]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const findIngredientId = (rawValue) => {
+      const normalized = normalizeText(rawValue);
+      if (!normalized) return null;
+      const exact = INGREDIENTS.find((ingredient) => ingredient.aliases.some((alias) => normalized === alias));
+      if (exact) return exact.id;
+      const contained = INGREDIENTS.find((ingredient) => ingredient.aliases.some((alias) => normalized.includes(alias)));
+      return contained ? contained.id : null;
+    };
+
+    const backendAllowed = () => CONFIG.enableOptionalBackend && window.location.protocol !== "file:";
+
+    const fetchWithTimeout = async (url, options, timeoutMs) => {
+      const controller = new AbortController();
+      const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        return await fetch(url, { ...options, signal: controller.signal });
+      } finally {
+        window.clearTimeout(timer);
+      }
+    };
+
+    const setBackendStatus = (status) => {
+      setState({ backend: Object.freeze({ status }) });
+      renderBackendStatus();
+    };
+
+    const checkBackendConnection = async () => {
+      const substitutionActive = backendAllowed();
+      if (window.location.protocol === "file:") {
+        setBackendStatus("offline");
+        ttsCapable = false;
+        renderNarration();
+        return;
+      }
+      if (substitutionActive) setBackendStatus("checking");
+      try {
+        const response = await fetchWithTimeout("/health", { method: "GET", headers: { "Accept": "application/json" } }, CONFIG.healthTimeoutMs);
+        if (!response.ok) {
+          if (substitutionActive) setBackendStatus("offline");
+          ttsCapable = false;
+          renderNarration();
+          return;
+        }
+        const payload = await response.json();
+        ttsCapable = Boolean(payload && payload.ttsEnabled === true);
+        if (substitutionActive) {
+          setBackendStatus(payload && payload.ok === true && payload.llmEnabled === true && payload.frontendLlmEnabled === true ? "ready" : "fallback");
+        }
+        renderNarration();
+      } catch (_) {
+        if (substitutionActive) setBackendStatus("offline");
+        ttsCapable = false;
+        renderNarration();
+      }
+    };
+
+    const parseBackendSelection = (ingredientId, payload) => {
+      if (!payload || payload.ingredientId !== ingredientId || typeof payload.substitutionId !== "string") return null;
+      const choice = getChoice(ingredientId, payload.substitutionId);
+      if (!choice) return null;
+      return withSource(choice, payload.source === "llm" ? "llm" : "fallback");
+    };
+
+    const resolveSubstitution = async (ingredientId, excludeIds = []) => {
+      const fallback = getFallbackChoice(ingredientId, excludeIds);
+      if (!fallback || !backendAllowed()) return fallback;
+      try {
+        const response = await fetchWithTimeout(
+          CONFIG.substitutionEndpoint,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              recipeId: "creamy-tomato-soup-v1",
+              ingredientId,
+              preferenceCategory: ["fat-free", "low-sodium"],
+              excludeSubstitutionIds: excludeIds
+            })
+          },
+          CONFIG.requestTimeoutMs
+        );
+        if (!response.ok) {
+          setBackendStatus("offline");
+          return fallback;
+        }
+        const payload = await response.json();
+        const selection = parseBackendSelection(ingredientId, payload);
+        if (!selection) {
+          setBackendStatus("fallback");
+          return fallback;
+        }
+        setBackendStatus(selection.source === "llm" ? "ready" : "fallback");
+        return selection;
+      } catch (_) {
+        setBackendStatus("offline");
+        return fallback;
+      }
+    };
+
+    const commitSwap = (ingredientId, replacement, cycleReset = false) => {
+      const totalOptions = Object.keys(SUBSTITUTIONS[ingredientId].choices).length;
+      const priorHistory = cycleReset ? [] : (state.optionHistory[ingredientId] || []);
+      const nextHistory = priorHistory.includes(replacement.id) ? priorHistory : [...priorHistory, replacement.id];
+      setState({
+        swaps: Object.freeze({ ...state.swaps, [ingredientId]: replacement }),
+        optionHistory: Object.freeze({ ...state.optionHistory, [ingredientId]: Object.freeze(nextHistory) }),
+        pendingIngredientId: null,
+        lastSwapId: ingredientId
+      });
+      render();
+      revoiceCurrentStepAfterRecipeChange();
+      announce(`${INGREDIENT_BY_ID[ingredientId].name} updated — option ${nextHistory.length} of ${totalOptions}. The matching cooking steps were updated too.`);
+    };
+
+    const requestSwap = async (ingredientId, cycle = false) => {
+      if (!SUBSTITUTIONS[ingredientId] || state.pendingIngredientId !== null) return;
+      if (getReplacement(ingredientId) && !cycle) {
+        announce(`${INGREDIENT_BY_ID[ingredientId].name} is already updated. Use "Another option" to compare, or Undo to return to the original.`);
+        return;
+      }
+
+      const totalOptions = Object.keys(SUBSTITUTIONS[ingredientId].choices).length;
+      const history = state.optionHistory[ingredientId] || [];
+      /* When cycling, skip options already shown so each click reveals a new one.
+         Once every option has been seen, start the rotation over. */
+      const cycleReset = cycle && history.length >= totalOptions;
+      const excludeIds = cycle && !cycleReset ? history : [];
+
+      const requestId = state.requestId + 1;
+      setState({ pendingIngredientId: ingredientId, requestId });
+      render();
+      announce(cycle
+        ? `Finding another option for ${INGREDIENT_BY_ID[ingredientId].name}…`
+        : `Finding one swap for ${INGREDIENT_BY_ID[ingredientId].name}…`);
+
+      const replacement = await resolveSubstitution(ingredientId, excludeIds);
+      if (state.requestId !== requestId) return;
+      commitSwap(ingredientId, replacement, cycleReset);
+    };
+
+    const undoSwap = (ingredientId) => {
+      if (!getReplacement(ingredientId)) return;
+      const { [ingredientId]: removed, ...remainingSwaps } = state.swaps;
+      const { [ingredientId]: removedHistory, ...remainingHistory } = state.optionHistory;
+      const newLastSwapId = state.lastSwapId === ingredientId ? null : state.lastSwapId;
+      setState({
+        swaps: Object.freeze(remainingSwaps),
+        optionHistory: Object.freeze(remainingHistory),
+        lastSwapId: newLastSwapId
+      });
+      render();
+      revoiceCurrentStepAfterRecipeChange();
+      announce(`${INGREDIENT_BY_ID[ingredientId].name} returned to the original recipe. Matching steps reverted too.`);
+    };
+
+    const incrementVoiceToken = () => state.voice.runToken + 1;
+
+    /*
+      OpenAI narration (optional upgrade). ttsCapable is set from /health.
+      Any failure — server down, TTS disabled, request/playback error — flips
+      ttsCapable off and re-speaks the step with the browser voice, so narration
+      never gets stuck. Audio is cached per step text: replays are instant and
+      only a swapped step re-fetches audio.
+    */
+    let ttsCapable = false;
+    let ttsAudio = null;
+    const ttsAudioCache = new Map();
+
+    const stopTtsAudio = () => {
+      if (!ttsAudio) return;
+      try { ttsAudio.pause(); } catch (_) {}
+      ttsAudio.onended = null;
+      ttsAudio.onerror = null;
+      ttsAudio = null;
+    };
+
+    const fetchStepAudioUrl = async (text) => {
+      if (ttsAudioCache.has(text)) return ttsAudioCache.get(text);
+      const response = await fetchWithTimeout(
+        CONFIG.speechEndpoint,
+        { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) },
+        CONFIG.speechTimeoutMs
+      );
+      if (!response.ok) throw new Error("tts_unavailable");
+      const url = URL.createObjectURL(await response.blob());
+      ttsAudioCache.set(text, url);
+      return url;
+    };
+
+    const isCurrentRun = (runToken) => state.voice.status === "playing" && state.voice.runToken === runToken;
+
+    const advanceOrFinish = (safeIndex, runToken) => {
+      if (!isCurrentRun(runToken)) return;
+      const latestSteps = getCookSteps();
+      if (safeIndex >= latestSteps.length - 1) {
+        setState({ voice: Object.freeze({ ...state.voice, status: "idle", stepIndex: 0 }) });
+        render();
+        return;
+      }
+      setState({ voice: Object.freeze({ ...state.voice, stepIndex: safeIndex + 1 }) });
+      render();
+      speakCurrentStep();
+    };
+
+    const speakWithBrowser = (text, safeIndex, runToken) => {
+      if (!state.voice.supported) {
+        setState({ voice: Object.freeze({ ...state.voice, status: "idle", stepIndex: 0 }) });
+        render();
+        return;
+      }
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.96;
+      utterance.onend = () => advanceOrFinish(safeIndex, runToken);
+      utterance.onerror = () => {
+        if (!isCurrentRun(runToken)) return;
+        setState({ voice: Object.freeze({ ...state.voice, status: "idle", stepIndex: 0 }) });
+        render();
+      };
+      window.speechSynthesis.speak(utterance);
+    };
+
+    const speakWithOpenAi = async (text, safeIndex, runToken) => {
+      try {
+        const url = await fetchStepAudioUrl(text);
+        if (!isCurrentRun(runToken)) return;
+        stopTtsAudio();
+        ttsAudio = new Audio(url);
+        ttsAudio.onended = () => advanceOrFinish(safeIndex, runToken);
+        ttsAudio.onerror = () => {
+          if (!isCurrentRun(runToken)) return;
+          ttsCapable = false;
+          speakWithBrowser(text, safeIndex, runToken);
+        };
+        await ttsAudio.play();
+      } catch (_) {
+        /* Server unreachable, TTS off, or playback blocked: fall back to the browser voice. */
+        if (!isCurrentRun(runToken)) return;
+        ttsCapable = false;
+        speakWithBrowser(text, safeIndex, runToken);
+      }
+    };
+
+    const speakCurrentStep = () => {
+      if (state.voice.status !== "playing") return;
+      const steps = getCookSteps();
+      const safeIndex = Math.min(Math.max(state.voice.stepIndex, 0), steps.length - 1);
+      const runToken = incrementVoiceToken();
+      setState({ voice: Object.freeze({ ...state.voice, stepIndex: safeIndex, runToken }) });
+      renderNarration();
+
+      const text = `Step ${safeIndex + 1}. ${steps[safeIndex].text}`;
+      if (ttsCapable) {
+        speakWithOpenAi(text, safeIndex, runToken);
+      } else {
+        speakWithBrowser(text, safeIndex, runToken);
+      }
+    };
+
+    const playOrResumeNarration = () => {
+      if (!state.voice.supported && !ttsCapable) {
+        dom.narrationStatus.textContent = "Voice narration is not available in this browser. Use the written steps instead.";
+        return;
+      }
+      if (state.voice.status === "playing") return;
+      setState({ voice: Object.freeze({ ...state.voice, status: "playing" }) });
+      render();
+      speakCurrentStep();
+    };
+
+    const pauseNarration = () => {
+      if (state.voice.status !== "playing") return;
+      /* Invalidate handlers before halting output so a late callback cannot advance a step. */
+      setState({ voice: Object.freeze({ ...state.voice, status: "paused", runToken: incrementVoiceToken() }) });
+      try { window.speechSynthesis.cancel(); } catch (_) {}
+      stopTtsAudio();
+      render();
+    };
+
+    const stopNarration = () => {
+      /* Invalidate handlers before halting output so a stale utterance/audio cannot resurrect playback. */
+      setState({ voice: Object.freeze({ ...state.voice, status: "idle", stepIndex: 0, runToken: incrementVoiceToken() }) });
+      try { window.speechSynthesis.cancel(); } catch (_) {}
+      stopTtsAudio();
+      render();
+    };
+
+    const revoiceCurrentStepAfterRecipeChange = () => {
+      if (state.voice.status === "idle") return;
+      const oldStatus = state.voice.status;
+      /* Preserve the current step but invalidate the old output before halting it. */
+      setState({ voice: Object.freeze({ ...state.voice, runToken: incrementVoiceToken() }) });
+      try { window.speechSynthesis.cancel(); } catch (_) {}
+      stopTtsAudio();
+      render();
+      if (oldStatus === "playing") {
+        window.setTimeout(() => speakCurrentStep(), 0);
+      }
+    };
+
+    let recognition = null;
+    const RecognitionConstructor = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    const setupVoiceInput = () => {
+      if (!RecognitionConstructor) return;
+      dom.voiceInputButton.hidden = false;
+      dom.voiceInputButton.addEventListener("click", () => {
+        try {
+          if (recognition) recognition.abort();
+          recognition = new RecognitionConstructor();
+          recognition.lang = "en-US";
+          recognition.interimResults = false;
+          recognition.maxAlternatives = 1;
+          dom.voiceInputButton.setAttribute("aria-pressed", "true");
+          announce("Listening for an ingredient name…");
+          recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            dom.swapInput.value = transcript;
+            const ingredientId = findIngredientId(transcript);
+            if (ingredientId) {
+              requestSwap(ingredientId);
+            } else {
+              announce("I did not recognize that ingredient. Try typing cream, broth, salt, or oil.");
+            }
+          };
+          recognition.onerror = () => {
+            announce("Voice input did not complete. You can type an ingredient instead.");
+          };
+          recognition.onend = () => {
+            dom.voiceInputButton.setAttribute("aria-pressed", "false");
+            recognition = null;
+          };
+          recognition.start();
+        } catch (_) {
+          announce("Voice input is unavailable right now. You can type an ingredient instead.");
+        }
+      });
+    };
+
+    const bindEvents = () => {
+      document.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-action]");
+        if (!button || button.disabled) return;
+        const ingredientId = button.dataset.ingredientId;
+        if (button.dataset.action === "swap") requestSwap(ingredientId);
+        if (button.dataset.action === "another") requestSwap(ingredientId, true);
+        if (button.dataset.action === "undo") undoSwap(ingredientId);
+      });
+
+      dom.askForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const ingredientId = findIngredientId(dom.swapInput.value);
+        if (!ingredientId) {
+          announce("I did not recognize that ingredient. Try cream, broth, salt, or oil.");
+          return;
+        }
+        requestSwap(ingredientId);
+      });
+
+      dom.playNarrationButton.addEventListener("click", playOrResumeNarration);
+      dom.pauseNarrationButton.addEventListener("click", pauseNarration);
+      dom.stopNarrationButton.addEventListener("click", stopNarration);
+
+      dom.backendStatusButton.addEventListener("click", checkBackendConnection);
+
+      dom.phonePreviewButton.addEventListener("click", () => {
+        const popup = window.open(window.location.href, "kindKitchenPhonePreview", "popup=yes,width=405,height=820,resizable=yes,scrollbars=yes");
+        if (!popup) {
+          window.alert("Your browser blocked the preview popup. Allow popups for this page, then try again.");
+        }
+      });
+
+      dom.helpButton.addEventListener("click", () => {
+        window.alert("KindKitchen starts with the original recipe. Tap a flagged ingredient to apply one suggested swap instantly. The ingredient row and matching cooking step update together. Use Undo to go back. The AI icon only shows whether the optional service is reachable; offline swaps always work. Voice controls are optional; the written recipe always works.");
+      });
+    };
+
+    bindEvents();
+    setupVoiceInput();
+    render();
+    checkBackendConnection();
+  </script>
+</body>
+</html>
