@@ -1,0 +1,10 @@
+{
+  "name": "kind-kitchen",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "KindKitchen — offline-first recipe-adaptation demo with optional OpenAI bounded selector and TTS narration.",
+  "engines": {
+    "node": ">=18"
+  }
+}

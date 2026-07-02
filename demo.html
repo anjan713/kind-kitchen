@@ -737,7 +737,9 @@
       Never place an OpenAI API key in this HTML file.
     */
     window.KINDKITCHEN_CONFIG = window.KINDKITCHEN_CONFIG || {
-      enableOptionalBackend: false,
+      // Use the backend automatically when served over http(s) (local server or
+      // Vercel functions); opening the file directly (file://) stays offline.
+      enableOptionalBackend: window.location.protocol !== "file:",
       substitutionEndpoint: "/api/substitutions",
       speechEndpoint: "/api/speech",
       requestTimeoutMs: 1600,
