@@ -1,3 +1,15 @@
+# KindKitchen
+
+**Live demo:** https://kind-kitchen-chi.vercel.app/
+
+An offline-first recipe-adaptation demo for fat-free and low-sodium preferences. Swap flagged ingredients one at a time and the cooking steps update instantly, with optional AI-assisted swap selection and voice narration.
+
+## Screenshots
+
+| Recipe & ingredient scan | Ingredient swaps | Cooking steps & narration |
+| --- | --- | --- |
+| ![Recipe overview with dietary badges and ingredient scan](screenshots/top.png) | ![Ingredient list with swap buttons and dietary flags](screenshots/middle.png) | ![Cooking steps with voice narration controls](screenshots/end.png) |
+
 ### Section A — Architecture Decisions
 
 KindKitchen is intentionally a single `demo.html` with inline CSS and JavaScript, so the assessment path works offline without an account, backend, build step, or downloaded assets. The cream-and-forest-green interface is phone-first, and recipe data, dietary findings, approved swaps, current substitutions, rewritten steps, and narration position are managed as one client-side state model. That shared state makes the visible recipe and spoken narration agree after every swap. A small Node service is optional: it can ask OpenAI to select an approved substitution and can generate natural TTS audio for a recipe step.
